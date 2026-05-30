@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Voroter Corporation</title>
+    <style>
+        :root {
+            --bg: #0f1720;
+            --surface: #17212b;
+            --surface2: #242f3d;
+            --text: #e9edf0;
+            --text2: #9fb0c0;
+            --accent: #3390ec;
+            --border: #2d3b4d;
+            --message-out: #2b5278;
+            --message-in: #1f2c3a;
+            --warning: #ff9800;
+            --danger: #e53935;
+            --online: #4caf50;
+        }
+        body[data-theme="light"] {
+            --bg: #f4f6f8;
+            --surface: #fff;
+            --surface2: #eef1f5;
+            --text: #111;
+            --text2: #666;
+            --border: #d7dde5;
+            --message-in: #fff;
+            --message-out: #dcf8c6;
+        }
+        body[data-theme="black"] {
+            --bg: #000;
+            --surface: #111;
+            --surface2: #181818;
+            --text: #fff;
+            --text2: #999;
+            --border: #222;
+            --message-in: #181818;
+            --message-out: #1f3a52;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Arial,sans-serif; }
+        body { background:var(--bg); color:var(--text); overflow:hidden; transition:.3s; }
+
+        .particles { position:fixed; inset:0; overflow:hidden; z-index:-1; }
+        .particle {
+            position:absolute; border-radius:50%; opacity:.4;
+            animation:float linear infinite;
+        }
+        @keyframes float { from{transform:translateY(100vh);} to{transform:translateY(-120vh);} }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+
+        .auth-screen { height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
+        .auth-box {
+            width:100%; max-width:420px;
+            background:rgba(20,30,40,.75);
+            border:1px solid rgba(255,255,255,.08);
+            backdrop-filter:blur(24px);
+            padding:30px; border-radius:28px;
+            box-shadow:0 0 50px rgba(0,0,0,.4);
+        }
+        .logo {
+            font-size:34px; font-weight:bold; text-align:center;
+            margin-bottom:10px; color:white; text-shadow:0 0 20px #3390ec;
+        }
+        .subtitle { text-align:center; color:var(--text2); margin-bottom:25px; }
+        .warning {
+            background:rgba(255,152,0,.15); border:1px solid var(--warning);
+            color:#ffcc80; padding:12px; border-radius:14px;
+            margin-bottom:18px; font-size:14px;
+        }
+        .status-message {
+            text-align:center; padding:10px; border-radius:10px;
+            margin-bottom:14px; font-size:13px; display:none;
+        }
+        .status-message.error { background:rgba(229,57,53,0.15); color:#ef5350; display:block; }
+        .status-message.success { background:rgba(76,175,80,0.15); color:#66bb6a; display:block; }
+        input {
+            width:100%; padding:14px; border:none; border-radius:14px;
+            background:var(--surface2); color:var(--text);
+            margin-bottom:14px; outline:none; font-size:15px;
+        }
+        input::placeholder { color:var(--text2); }
+        button { border:none; cursor:pointer; }
+        .main-btn {
+            width:100%; padding:15px; border-radius:16px;
+            background:linear-gradient(45deg,#3390ec,#5ba8ff);
+            color:white; font-size:16px; font-weight:bold; transition:.25s;
+        }
+        .main-btn:hover { transform:scale(1.02); box-shadow:0 8px 25px rgba(51,144,236,0.4); }
+
+        .app { width:100%; height:100vh; display:none; max-width:900px; margin:auto; }
+        .layout { display:flex; height:100%; }
+        .sidebar {
+            width:100%; max-width:400px; margin:0 auto;
+            background:var(--surface);
+            display:flex; flex-direction:column;
+        }
+        .header {
+            padding:18px; font-size:20px; font-weight:bold;
+            border-bottom:1px solid var(--border);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .logout-btn {
+            background:rgba(229,57,53,0.15); color:var(--danger);
+            padding:8px 14px; border-radius:10px; font-size:14px;
+        }
+        .online-users {
+            padding:10px 18px; font-size:13px; color:var(--online);
+            border-bottom:1px solid var(--border);
+            display:flex; align-items:center; gap:8px;
+        }
+        .online-dot {
+            width:8px; height:8px; background:var(--online);
+            border-radius:50%; animation:pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+        .global-chat { flex:1; display:flex; flex-direction:column; }
+        .chat-messages {
+            flex:1; overflow:auto; padding:20px;
+            display:flex; flex-direction:column; gap:10px;
+        }
+        .message {
+            max-width:70%; padding:12px 15px; border-radius:18px;
+            line-height:1.4; animation:fadeIn 0.3s;
+        }
+        .message.in { background:var(--message-in); align-self:flex-start; border-bottom-left-radius:6px; }
+        .message.out { background:var(--message-out); align-self:flex-end; border-bottom-right-radius:6px; }
+        .message-sender { font-size:12px; font-weight:bold; color:var(--accent); margin-bottom:4px; }
+        .message-time { font-size:11px; opacity:0.6; margin-top:4px; text-align:right; }
+        .empty-chat { text-align:center; color:var(--text2); padding:40px; }
+        .send-bar {
+            display:flex; padding:14px; gap:10px;
+            border-top:1px solid var(--border); background:var(--surface);
+        }
+        .send-bar input { margin:0; }
+        .send-btn {
+            width:55px; border-radius:14px; background:var(--accent);
+            color:white; font-size:20px; transition:.2s;
+        }
+        .send-btn:hover { background:#2980d0; }
+        .theme-toggle { display:flex; gap:6px; margin-top:14px; justify-content:center; }
+        .theme-dot {
+            width:30px; height:30px; border-radius:50%;
+            border:2px solid transparent; cursor:pointer; transition:.2s;
+        }
+        .theme-dot.active { border-color:white; }
+        .theme-dot.light { background:#fff; }
+        .theme-dot.dark { background:#1f2c3a; }
+        .theme-dot.black { background:#000; }
+    </style>
+</head>
+<body data-theme="dark">
+<div class="particles" id="particles"></div>
+
+<!-- ЭКРАН ВХОДА -->
+<div class="auth-screen" id="authScreen">
+    <div class="auth-box">
+        <div class="logo">Voroter</div>
+        <div class="subtitle">Corporation Messenger</div>
+        <div class="warning">
+            ⚙️ Приложение в разработке<br>
+            Подтверждение не требуется
+        </div>
+        <div class="status-message" id="statusMessage"></div>
+        <input type="text" id="nameInput" placeholder="Ваше имя">
+        <button class="main-btn" id="loginBtn">🚀 Войти в чат</button>
+        <div class="theme-toggle" id="themeToggle">
+            <div class="theme-dot light" data-theme="light"></div>
+            <div class="theme-dot dark active" data-theme="dark"></div>
+            <div class="theme-dot black" data-theme="black"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ЧАТ -->
+<div class="app phone" id="app">
+    <div class="layout">
+        <div class="sidebar">
+            <div class="header">
+                <span>Voroter Chat</span>
+                <button class="logout-btn" id="logoutBtn">🚪</button>
+            </div>
+            <div class="online-users">
+                <span class="online-dot"></span>
+                <span><span id="onlineCount">0</span> онлайн</span>
+            </div>
+            <div class="global-chat">
+                <div class="chat-messages" id="messages">
+                    <div class="empty-chat">Загрузка...</div>
+                </div>
+                <div class="send-bar">
+                    <input type="text" placeholder="Сообщение..." id="messageInput">
+                    <button class="send-btn" id="sendBtn">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+    // ========== ВАШ FIREBASE КОНФИГ ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyCz5yrteQWriA3PDzzjK3E8jIwOHNCchxc",
+        authDomain: "voroter-corporation-mess-72f5f.firebaseapp.com",
+        databaseURL: "https://voroter-corporation-mess-72f5f-default-rtdb.firebaseio.com",
+        projectId: "voroter-corporation-mess-72f5f",
+        storageBucket: "voroter-corporation-mess-72f5f.firebasestorage.app",
+        messagingSenderId: "717416784236",
+        appId: "1:717416784236:web:414831d6e8bb0c36101349",
+        measurementId: "G-XXVSBCVS18"
+    };
+
+    // Инициализация Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const messagesRef = database.ref('messages');
+
+    // Частицы фона
+    (function createParticles() {
+        const c = document.getElementById("particles");
+        for (let i = 0; i < 30; i++) {
+            const p = document.createElement("div");
+            p.className = "particle";
+            const s = 3 + Math.random() * 8;
+            p.style.width = s + "px";
+            p.style.height = s + "px";
+            p.style.left = Math.random() * 100 + "vw";
+            p.style.background = ["#3390ec", "#fff", "#5ba8ff", "#00e676"][Math.floor(Math.random() * 4)];
+            p.style.animationDuration = (10 + Math.random() * 18) + "s";
+            c.appendChild(p);
+        }
+    })();
+
+    let userName = '';
+
+    // DOM элементы
+    const authScreen = document.getElementById('authScreen');
+    const appDiv = document.getElementById('app');
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const nameInput = document.getElementById('nameInput');
+    const onlineCount = document.getElementById('onlineCount');
+    const statusMessage = document.getElementById('statusMessage');
+
+    function getTime() {
+        return new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Отправка сообщения
+    function sendMessage() {
+        const text = messageInput.value.trim();
+        if (!text || !userName) return;
+
+        messagesRef.push({
+            sender: userName,
+            text: text,
+            time: getTime(),
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        messageInput.value = '';
+    }
+
+    // Загрузка сообщений
+    function loadMessages() {
+        messagesRef.limitToLast(100).on('value', (snapshot) => {
+            messagesDiv.innerHTML = '';
+            const messages = [];
+            snapshot.forEach((child) => messages.push({ id: child.key, ...child.val() }));
+            messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+            if (messages.length === 0) {
+                messagesDiv.innerHTML = '<div class="empty-chat">Нет сообщений. Напишите первым! 💬</div>';
+                return;
+            }
+
+            messages.forEach(msg => {
+                const isMe = msg.sender === userName;
+                const div = document.createElement('div');
+                div.className = 'message ' + (isMe ? 'out' : 'in');
+                div.innerHTML = `
+                    ${!isMe ? `<div class="message-sender">${msg.sender}</div>` : ''}
+                    ${msg.text}
+                    <div class="message-time">${msg.time || ''}</div>
+                `;
+                messagesDiv.appendChild(div);
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+    }
+
+    // Онлайн-счётчик
+    function trackOnline() {
+        const onlineRef = database.ref('online');
+        const myRef = onlineRef.push();
+        myRef.set(true);
+        myRef.onDisconnect().remove();
+        onlineRef.on('value', (snapshot) => {
+            onlineCount.textContent = snapshot.numChildren();
+        });
+    }
+
+    // Вход
+    loginBtn.onclick = () => {
+        userName = nameInput.value.trim();
+        if (!userName) {
+            statusMessage.textContent = 'Введите имя';
+            statusMessage.className = 'status-message error';
+            return;
+        }
+
+        database.ref('.info/connected').once('value', (snap) => {
+            if (snap.val() === true) {
+                localStorage.setItem('voroter_user', userName);
+                authScreen.style.display = 'none';
+                appDiv.style.display = 'block';
+                loadMessages();
+                trackOnline();
+                messageInput.focus();
+            } else {
+                statusMessage.textContent = 'Нет подключения к серверу';
+                statusMessage.className = 'status-message error';
+            }
+        });
+    };
+
+    // Enter на экране входа
+    nameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginBtn.click();
+    });
+
+    // Выход
+    logoutBtn.onclick = () => {
+        localStorage.removeItem('voroter_user');
+        location.reload();
+    };
+
+    // Отправка
+    sendBtn.onclick = sendMessage;
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    // Темы
+    document.querySelectorAll('.theme-dot').forEach(dot => {
+        dot.onclick = () => {
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+            dot.classList.add('active');
+            const theme = dot.dataset.theme;
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('voroter_theme', theme);
+        };
+    });
+
+    // Загрузка сохранённой темы
+    const savedTheme = localStorage.getItem('voroter_theme') || 'dark';
+    document.body.setAttribute('data-theme', savedTheme);
+    document.querySelectorAll('.theme-dot').forEach(d => {
+        d.classList.toggle('active', d.dataset.theme === savedTheme);
+    });
+
+    // Автовход
+    const savedUser = localStorage.getItem('voroter_user');
+    if (savedUser) {
+        userName = savedUser;
+        authScreen.style.display = 'none';
+        appDiv.style.display = 'block';
+        loadMessages();
+        trackOnline();
+        messageInput.focus();
+    }
+</script>
+</body>
+</html>
